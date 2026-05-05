@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BenessereScuola</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-name">BenessereScuola</span>
+      </a>
+      <div class="navbar-links">
+        <a href="/classifica">Classifica</a>
+        <a href="/fonti">Fonti</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/login" class="btn btn-primary btn-sm">Accedi</a>
+      </div>
+    </nav>
+
+    <section class="hero fade-up">
+      <div class="hero-icon">🌿</div>
+      <h1>Il tuo benessere,<br><em>ogni giorno</em></h1>
+      <p>Monitora sonno, idratazione e umore. Guadagna punti, completa sfide e scala la classifica.</p>
+      <div class="hero-cta">
+        <a href="/login" class="btn btn-primary btn-lg">Inizia ora</a>
+        <a href="/classifica" class="btn btn-secondary btn-lg">Classifica</a>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <p class="section-title">Web Service API</p>
+    <div class="card fade-up fade-up-1">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="/ws/classifica" class="btn btn-ghost" style="justify-content:flex-start;font-family:monospace;font-size:.85rem;">GET /ws/classifica</a>
+        <a href="/ws/motivazione" class="btn btn-ghost" style="justify-content:flex-start;font-family:monospace;font-size:.85rem;">GET /ws/motivazione</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

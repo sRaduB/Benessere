@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inserisci dati – BenessereScuola</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-name">BenessereScuola</span>
+      </a>
+      <div class="navbar-links">
+        <a href="/dashboard">Dashboard</a>
+      </div>
+    </nav>
+
+    <div class="page-header fade-up">
+      <h1>I dati di oggi</h1>
+      <p>Registra sonno, idratazione e umore per guadagnare punti</p>
+    </div>
+
+    <div class="card fade-up fade-up-1" style="max-width:560px;margin:0 auto">
+
+      <div class="form-group">
+        <label class="form-label">Ore di sonno</label>
+        <div class="range-wrap">
+          <input type="range" id="sonno" min="0" max="12" step="0.5" value="7">
+          <span class="range-value"><span id="sonnoVal">7.0</span>h</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Acqua (litri)</label>
+        <div class="range-wrap">
+          <input type="range" id="acqua" min="0" max="3" step="0.1" value="1.2">
+          <span class="range-value"><span id="acquaVal">1.2</span>L</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Come stai oggi?</label>
+        <div class="mood-grid">
+          <div>
+            <input class="mood-option" type="radio" name="umore" id="m1" value="1">
+            <label class="mood-label" for="m1"><span class="mood-emoji">😢</span>Triste</label>
+          </div>
+          <div>
+            <input class="mood-option" type="radio" name="umore" id="m2" value="2">
+            <label class="mood-label" for="m2"><span class="mood-emoji">😟</span>Giù</label>
+          </div>
+          <div>
+            <input class="mood-option" type="radio" name="umore" id="m3" value="3" checked>
+            <label class="mood-label" for="m3"><span class="mood-emoji">😐</span>Normale</label>
+          </div>
+          <div>
+            <input class="mood-option" type="radio" name="umore" id="m4" value="4">
+            <label class="mood-label" for="m4"><span class="mood-emoji">🙂</span>Bene</label>
+          </div>
+          <div>
+            <input class="mood-option" type="radio" name="umore" id="m5" value="5">
+            <label class="mood-label" for="m5"><span class="mood-emoji">😁</span>Ottimo</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full btn-lg" onclick="salva()">Salva giornata</button>
+      <div id="msg"></div>
+    </div>
+
+    <a href="/dashboard" class="back-link">← Dashboard</a>
+  </div>
+
+  <script>
+    const userId = localStorage.getItem('userId');
+    if (!userId) window.location.href = '/login';
+
+    const sonnoEl = document.getElementById('sonno');
+    const acquaEl = document.getElementById('acqua');
+    sonnoEl.oninput = () => document.getElementById('sonnoVal').innerText = parseFloat(sonnoEl.value).toFixed(1);
+    acquaEl.oninput = () => document.getElementById('acquaVal').innerText = parseFloat(acquaEl.value).toFixed(1);
+
+    async function salva() {
+      const sonno  = parseFloat(sonnoEl.value);
+      const acqua  = parseFloat(acquaEl.value);
+      const umore  = parseInt(document.querySelector('input[name="umore"]:checked').value);
+      const oggi   = new Date().toISOString().split('T')[0];
+
+      const res = await fetch('/api/salva-dati', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, sonno, acqua, umore, data: oggi })
+      });
+      const data = await res.json();
+      const msgEl = document.getElementById('msg');
+      if (data.success) {
+        msgEl.innerHTML = `<div class="alert alert-success">Salvato! Punteggio: <b>${data.punteggio}/100</b> &nbsp;🔥 Streak: <b>${data.streak}</b></div>`;
+        setTimeout(() => window.location.href = '/dashboard', 1800);
+      } else {
+        msgEl.innerHTML = '<div class="alert alert-error">Errore nel salvataggio</div>';
+      }
+    }
+  </script>
+</body>
+</html>

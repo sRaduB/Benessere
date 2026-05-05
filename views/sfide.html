@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sfide – BenessereScuola</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-name">BenessereScuola</span>
+      </a>
+      <div class="navbar-links">
+        <a href="/dashboard">Dashboard</a>
+      </div>
+    </nav>
+
+    <div class="page-header fade-up">
+      <h1>Sfide</h1>
+      <p>Completa le sfide per guadagnare punti extra</p>
+    </div>
+
+    <div class="fade-up fade-up-1">
+      <div class="challenge-card">
+        <div class="challenge-info">
+          <div class="challenge-title">Vai a scuola a piedi</div>
+          <div class="challenge-desc">Cammina per 5 giorni consecutivi invece di prendere l'auto</div>
+          <span class="challenge-pts">+30 punti</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="completa('walk', 30)">Completa</button>
+      </div>
+
+      <div class="challenge-card">
+        <div class="challenge-info">
+          <div class="challenge-title">Borraccia per una settimana</div>
+          <div class="challenge-desc">Zero plastica monouso per 7 giorni di fila</div>
+          <span class="challenge-pts">+20 punti</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="completa('bottle', 20)">Completa</button>
+      </div>
+
+      <div class="challenge-card">
+        <div class="challenge-info">
+          <div class="challenge-title">Sfida del sonno</div>
+          <div class="challenge-desc">Dormi 8 ore per 5 notti consecutive</div>
+          <span class="challenge-pts">+25 punti</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="completa('sleep', 25)">Completa</button>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <p class="section-title fade-up fade-up-2">Sfide completate</p>
+    <ul id="listaSfide" class="completed-list fade-up fade-up-3">
+      <li style="color:var(--text-muted);border:none;background:none">Caricamento…</li>
+    </ul>
+
+    <a href="/dashboard" class="back-link">← Dashboard</a>
+  </div>
+
+  <script>
+    const userId = localStorage.getItem('userId');
+    if (!userId) window.location.href = '/login';
+
+    const nomi = {
+      walk:   'Vai a scuola a piedi',
+      bottle: 'Borraccia',
+      sleep:  'Sfida del sonno'
+    };
+
+    async function completa(nome, punti) {
+      const res = await fetch('/api/sfida-completa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, sfidaNome: nome, punti })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`+${punti} punti guadagnati!`);
+        caricaSfide();
+      } else {
+        alert('Errore nel completamento');
+      }
+    }
+
+    async function caricaSfide() {
+      const res   = await fetch(`/api/sfide/${userId}`);
+      const sfide = await res.json();
+      const lista = document.getElementById('listaSfide');
+      lista.innerHTML = '';
+      if (!sfide.length) {
+        lista.innerHTML = '<li style="color:var(--text-muted);border:none;background:none">Nessuna sfida completata ancora</li>';
+        return;
+      }
+      for (let s of sfide) {
+        const nome = nomi[s.sfida_nome] || s.sfida_nome;
+        lista.innerHTML += `<li>${nome} <span style="margin-left:auto;color:var(--green-600);font-weight:700">+${s.punti} pt</span> <span style="color:var(--text-muted);font-size:.8rem">${s.data_completamento}</span></li>`;
+      }
+    }
+    caricaSfide();
+  </script>
+</body>
+</html>

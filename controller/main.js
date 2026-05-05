@@ -1,0 +1,172 @@
+const express = require('express');
+const path = require('path');
+const db = require('../models/database');
+
+const app = express();
+const PORT = 3000;
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, '..', 'views')));
+
+// ============ ROTTE VIEWS ============
+app.get('/', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'index.html'));});
+app.get('/login', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'login.html'));});
+app.get('/dashboard', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'dashboard.html'));});
+app.get('/inserimento', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'inserimento.html'));});
+app.get('/storico', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'storico.html'));});
+app.get('/sfide', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'sfide.html'));});
+app.get('/classifica', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'classifica.html'));});
+app.get('/fonti', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'fonti.html'));});
+app.get('/privacy', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'privacy.html'));});
+
+
+app.post('/api/register', async (req, res) => {
+    const { username, password, città } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username e password richiesti' });
+    }
+    
+    try {
+        const existing = await db.findUserByUsername(username);
+        if (existing) {
+            return res.status(400).json({ error: 'Username già esistente' });
+        }
+        
+        const newUser = await db.createUser(username, password, città);
+        res.json({ success: true, userId: newUser.id, username: newUser.username });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Errore del server' });
+    }
+});
+
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    
+    try {
+        const user = await db.verifyLogin(username, password);
+        if (!user) {
+            return res.status(401).json({ error: 'Credenziali non valide' });
+        }
+        
+        res.json({ success: true, userId: user.id, username: user.username, città: user.città });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Errore del server' });
+    }
+});
+
+app.post('/api/salva-dati', async (req, res) => {
+    const { userId, sonno, acqua, umore, data } = req.body;
+    
+    if (!userId || sonno === undefined || acqua === undefined || !umore) {
+        return res.status(400).json({ error: 'Dati incompleti' });
+    }
+    
+    const punteggio = db.calculateScore(sonno, acqua, umore);
+    const oggi = data || new Date().toISOString().split('T')[0];
+    
+    try {
+        await db.saveDailyData(userId, oggi, sonno, acqua, umore, punteggio);
+        
+        // Ottieni streak aggiornato
+        const user = await db.findUserById(userId);
+        
+        res.json({ success: true, punteggio, streak: user?.streak || 0, puntiTotali: user?.punti_totali || 0 });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Errore salvataggio' });
+    }
+});
+
+// ============ API DATI UTENTE ============
+app.get('/api/user/:userId', async (req, res) => {
+    const { userId } = req.params;
+    
+    try {
+        const user = await db.findUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Utente non trovato' });
+        }
+        
+        const dati = await db.getUserHistory(userId);
+        
+        res.json({ user, dati });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Errore del server' });
+    }
+});
+
+// ============ API CLASSIFICA ============
+app.get('/api/classifica', async (req, res) => {
+    try {
+        const classifica = await db.getRanking();
+        res.json(classifica);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Errore del server' });
+    }
+});
+
+// ============ API SFIDA COMPLETATA ============
+app.post('/api/sfida-completa', async (req, res) => {
+    const { userId, sfidaNome, punti } = req.body;
+    
+    try {
+        const nuovoTotale = await db.addChallengePoints(userId, sfidaNome, punti);
+        res.json({ success: true, nuovoTotale });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Errore' });
+    }
+});
+
+// ============ API SFIDE UTENTE ============
+app.get('/api/sfide/:userId', async (req, res) => {
+    const { userId } = req.params;
+    
+    try {
+        const sfide = await db.getUserChallenges(userId);
+        res.json(sfide);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Errore' });
+    }
+});
+
+// ============ WEB SERVICE PER ALTRI PROGETTI ============
+app.get('/ws/classifica', async (req, res) => {
+    try {
+        const classifica = await db.getRanking();
+        res.json({
+            service: 'BenessereScuola - Web Service',
+            data: new Date().toISOString(),
+            classifica
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Errore' });
+    }
+});
+
+app.get('/ws/motivazione', (req, res) => {
+    const frasi = [
+        "Dormire bene migliora la memoria e l'apprendimento",
+        "Bere 1.5-2 litri d'acqua al giorno fa bene al corpo",
+        "Un sorriso al giorno aiuta a ridurre lo stress",
+        "La costanza è la chiave del benessere",
+        "Ascolta il tuo corpo: è il miglior medico"
+    ];
+    res.json({
+        service: 'BenessereScuola - Motivazione',
+        frase: frasi[Math.floor(Math.random() * frasi.length)],
+        fonte: 'Ministero della Salute'
+    });
+});
+
+// Avvia server
+app.listen(PORT, () => {
+    console.log(`server in ascolto su http://localhost:${PORT}`);
+});

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classifica – BenessereScuola</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-name">BenessereScuola</span>
+      </a>
+      <div class="navbar-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/">Home</a>
+      </div>
+    </nav>
+
+    <div class="page-header fade-up">
+      <h1>Classifica</h1>
+      <p>Chi si prende cura di sé ogni giorno scala la vetta</p>
+    </div>
+
+    <div id="classificaList" class="fade-up fade-up-1">
+      <p style="color:var(--text-muted);text-align:center;padding:32px">Caricamento…</p>
+    </div>
+
+    <a href="/dashboard" class="back-link">← Dashboard</a>
+  </div>
+
+  <script>
+    async function load() {
+      const res  = await fetch('/api/classifica');
+      const data = await res.json();
+      const wrap = document.getElementById('classificaList');
+      wrap.innerHTML = '';
+      if (!data.length) {
+        wrap.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:32px">Nessun dato ancora</p>';
+        return;
+      }
+      data.forEach((u, i) => {
+        const medals = ['Oro', 'Argento', 'Bronzo']; // da rimpiazzare
+        const rankClass = i < 3 ? `rank-${i + 1}` : '';
+        const medal = medals[i] || `${i + 1}`;
+        wrap.innerHTML += `
+          <div class="leaderboard-row ${rankClass}">
+            <span class="rank-badge">${medal}</span>
+            <span class="leaderboard-name">${u.username}</span>
+            <span class="leaderboard-streak">${u.streak || 0}</span>
+            <span class="leaderboard-pts">${u.punti_totali || 0} pt</span>
+          </div>`;
+      });
+    }
+    load();
+  </script>
+</body>
+</html>

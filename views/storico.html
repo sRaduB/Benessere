@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storico – BenessereScuola</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-name">BenessereScuola</span>
+      </a>
+      <div class="navbar-links">
+        <a href="/dashboard">Dashboard</a>
+      </div>
+    </nav>
+
+    <div class="page-header fade-up">
+      <h1>Storico completo</h1>
+      <p>Tutto il tuo percorso di benessere in un colpo d'occhio</p>
+    </div>
+
+    <div class="card fade-up fade-up-1">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th><th>Sonno</th><th>Acqua</th><th>Umore</th><th>Punteggio</th>
+            </tr>
+          </thead>
+          <tbody id="storicoBody">
+            <tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:32px">Caricamento…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <a href="/dashboard" class="back-link">← Dashboard</a>
+  </div>
+
+  <script>
+    const userId = localStorage.getItem('userId');
+    if (!userId) window.location.href = '/login';
+
+    async function load() {
+      const res  = await fetch(`/api/user/${userId}`);
+      const data = await res.json();
+      const tbody = document.getElementById('storicoBody');
+      tbody.innerHTML = '';
+      if (!data.dati.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:32px">Nessun dato ancora</td></tr>';
+        return;
+      }
+      for (let d of data.dati) {
+        let umoreTxt = ['😢', '😟', '😐', '🙂', '😁'][d.umore - 1] || '😐';
+        tbody.innerHTML += `<tr>
+          <td>${d.data}</td>
+          <td>${d.sonno}h</td>
+          <td>${d.acqua}L</td>
+          <td style="font-size:1.2rem">${umoreTxt}</td>
+          <td><b>${d.punteggio}</b></td>
+        </tr>`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

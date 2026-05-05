@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accedi – BenessereScuola</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-name">BenessereScuola</span>
+      </a>
+    </nav>
+
+    <div class="auth-wrap fade-up">
+      <div class="page-header" style="padding:32px 0 24px">
+        <h1>Bentornato!</h1>
+        <p>Accedi al tuo profilo o crea un account</p>
+      </div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Accedi</div>
+        <div class="auth-tab" id="tabRegister" onclick="switchTab('register')">Registrati</div>
+      </div>
+
+      <!-- Login -->
+      <div id="panelLogin" class="card">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" type="text" id="loginUsername" placeholder="Il tuo username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="loginPassword" placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doLogin()">Accedi →</button>
+        <div id="loginError"></div>
+      </div>
+
+      <!-- Register -->
+      <div id="panelRegister" class="card" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" type="text" id="regUsername" placeholder="Scegli un username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="regPassword" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Città <span style="color:var(--text-muted);font-weight:400">(opzionale)</span></label>
+          <input class="form-input" type="text" id="regCittà" placeholder="es. Milano">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doRegister()">Crea account →</button>
+        <div id="regError"></div>
+      </div>
+
+      <a href="/" class="back-link">← Home</a>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      document.getElementById('panelLogin').style.display   = tab === 'login'    ? '' : 'none';
+      document.getElementById('panelRegister').style.display = tab === 'register' ? '' : 'none';
+      document.getElementById('tabLogin').classList.toggle('active',    tab === 'login');
+      document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.innerHTML = `<div class="alert alert-error">${msg}</div>`;
+    }
+
+    async function doLogin() {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('loginUsername').value,
+          password: document.getElementById('loginPassword').value
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('userId', data.userId);
+        localStorage.setItem('username', data.username);
+        window.location.href = '/dashboard';
+      } else {
+        showError('loginError', data.error);
+      }
+    }
+
+    async function doRegister() {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('regUsername').value,
+          password: document.getElementById('regPassword').value,
+          città: document.getElementById('regCittà').value
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('regError').innerHTML = '<div class="alert alert-success">Account creato! Ora accedi.</div>';
+        setTimeout(() => switchTab('login'), 1500);
+      } else {
+        showError('regError', data.error);
+      }
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        if (document.getElementById('panelLogin').style.display !== 'none') doLogin();
+        else doRegister();
+      }
+    });
+  </script>
+</body>
+</html>
