@@ -170,34 +170,6 @@ app.get('/api/sfide/:userId', authenticateToken, async (req, res) => {
     }
 });
 
-app.get('/ws/classifica', async (req, res) => {
-    try {
-        const classifica = await db.getRanking();
-        res.json({
-            service: 'BenessereScuola - Web Service',
-            data: new Date().toISOString(),
-            classifica
-        });
-    } catch (err) {
-        res.status(500).json({ error: 'Errore' });
-    }
-});
-
-app.get('/ws/motivazione', (req, res) => {
-    const frasi = [
-        "Dormire bene migliora la memoria e l'apprendimento",
-        "Bere 1.5-2 litri d'acqua al giorno fa bene al corpo",
-        "Un sorriso al giorno aiuta a ridurre lo stress",
-        "La costanza è la chiave del benessere",
-        "Ascolta il tuo corpo: è il miglior medico"
-    ];
-    res.json({
-        service: 'BenessereScuola - Motivazione',
-        frase: frasi[Math.floor(Math.random() * frasi.length)],
-        fonte: 'Ministero della Salute'
-    });
-});
-
 app.listen(PORT, () => {
     console.log(`server in ascolto su http://localhost:${PORT}`);
 });
