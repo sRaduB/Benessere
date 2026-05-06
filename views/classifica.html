@@ -43,7 +43,7 @@
         return;
       }
       data.forEach((u, i) => {
-        const medals = ['Oro', 'Argento', 'Bronzo']; // da rimpiazzare
+        const medals = ['🥇', '🥈', '🥉']; // da rimpiazzare
         const rankClass = i < 3 ? `rank-${i + 1}` : '';
         const medal = medals[i] || `${i + 1}`;
         wrap.innerHTML += `
