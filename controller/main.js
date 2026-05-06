@@ -1,24 +1,44 @@
 const express = require('express');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const db = require('../models/database');
+const cookieParser = require('cookie-parser');
 
 const app = express();
-const PORT = 3000;
+const PORT = 8080;
+const SECRET_KEY = "oscarBostan";
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..', 'views')));
 
+function authenticateToken(req, res, next) {
+    const token = req.cookies.token;
+    if (!token)
+        return res.status(401).json({
+            message: "Token mancante"
+        });
+        jwt.verify(token, SECRET_KEY, (err, user) => {
+        if (err)
+            return res.status(403).json({
+                message: "Token non valido"
+            });
+        req.user = user;
+        next();
+    });
+}
+
 // ============ ROTTE VIEWS ============
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'index.html'));});
 app.get('/login', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'login.html'));});
-app.get('/dashboard', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'dashboard.html'));});
-app.get('/inserimento', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'inserimento.html'));});
-app.get('/storico', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'storico.html'));});
-app.get('/sfide', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'sfide.html'));});
-app.get('/classifica', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'classifica.html'));});
-app.get('/fonti', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'fonti.html'));});
-app.get('/privacy', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'privacy.html'));});
+app.get('/dashboard', authenticateToken, (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'dashboard.html'));});
+app.get('/inserimento', authenticateToken, (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'inserimento.html'));});
+app.get('/storico', authenticateToken, (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'storico.html'));});
+app.get('/sfide', authenticateToken, (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'sfide.html'));});
+app.get('/classifica', authenticateToken, (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'classifica.html'));});
+app.get('/fonti', authenticateToken, (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'fonti.html'));});
+app.get('/privacy', authenticateToken, (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'privacy.html'));});
 
 
 app.post('/api/register', async (req, res) => {
@@ -50,6 +70,24 @@ app.post('/api/login', async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: 'Credenziali non valide' });
         }
+
+        const token = jwt.sign(
+        {
+            id: user.id,
+            username: user.username,
+            role: user.role
+        },
+            SECRET_KEY,
+        { expiresIn: "1h" }
+
+        );
+
+        res.cookie("token", token, {
+            httpOnly: false,
+            secure: false, // true in HTTPS
+            sameSite: "lax",
+            maxAge: 3600000
+        });
         
         res.json({ success: true, userId: user.id, username: user.username, città: user.città });
     } catch (err) {
@@ -58,7 +96,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-app.post('/api/salva-dati', async (req, res) => {
+app.post('/api/salva-dati', authenticateToken, async (req, res) => {
     const { userId, sonno, acqua, umore, data } = req.body;
     
     if (!userId || sonno === undefined || acqua === undefined || !umore) {
@@ -82,7 +120,7 @@ app.post('/api/salva-dati', async (req, res) => {
 });
 
 // ============ API DATI UTENTE ============
-app.get('/api/user/:userId', async (req, res) => {
+app.get('/api/user/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
     
     try {
@@ -101,7 +139,7 @@ app.get('/api/user/:userId', async (req, res) => {
 });
 
 // ============ API CLASSIFICA ============
-app.get('/api/classifica', async (req, res) => {
+app.get('/api/classifica', authenticateToken, async (req, res) => {
     try {
         const classifica = await db.getRanking();
         res.json(classifica);
@@ -112,7 +150,7 @@ app.get('/api/classifica', async (req, res) => {
 });
 
 // ============ API SFIDA COMPLETATA ============
-app.post('/api/sfida-completa', async (req, res) => {
+app.post('/api/sfida-completa', authenticateToken, async (req, res) => {
     const { userId, sfidaNome, punti } = req.body;
     
     try {
@@ -125,7 +163,7 @@ app.post('/api/sfida-completa', async (req, res) => {
 });
 
 // ============ API SFIDE UTENTE ============
-app.get('/api/sfide/:userId', async (req, res) => {
+app.get('/api/sfide/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
     
     try {
