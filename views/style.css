@@ -623,7 +623,6 @@ tbody td b { font-weight: 700; color: var(--green-700); }
 }
 
 .completed-list li::before {
-  content: '✅';
   font-size: 1rem;
 }
 

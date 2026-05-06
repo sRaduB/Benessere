@@ -53,31 +53,26 @@ async function verifyLogin(username, password) {
 }
 
 async function saveDailyData(userId, data, sonno, acqua, umore, punteggio) {
-    // Verifica se esiste già un record per questa data
     const [existing] = await promisePool.query(
         'SELECT * FROM dati_benessere WHERE user_id = ? AND data = ?',
         [userId, data]
     );
     
     if (existing.length > 0) {
-        // Aggiorna esistente
         await promisePool.query(
             'UPDATE dati_benessere SET sonno = ?, acqua = ?, umore = ?, punteggio = ? WHERE user_id = ? AND data = ?',
             [sonno, acqua, umore, punteggio, userId, data]
         );
     } else {
-        // Inserisci nuovo
         await promisePool.query(
             'INSERT INTO dati_benessere (user_id, data, sonno, acqua, umore, punteggio) VALUES (?, ?, ?, ?, ?, ?)',
             [userId, data, sonno, acqua, umore, punteggio]
         );
     }
     
-    // Ricalcola streak e punti totali
     await updateUserStats(userId);
 }
 
-// Ottieni storico dati di un utente
 async function getUserHistory(userId) {
     const [rows] = await promisePool.query(
         'SELECT data, sonno, acqua, umore, punteggio FROM dati_benessere WHERE user_id = ? ORDER BY data DESC',
@@ -86,7 +81,6 @@ async function getUserHistory(userId) {
     return rows;
 }
 
-// Ottieni ultimi N dati
 async function getLastNDays(userId, n) {
     const [rows] = await promisePool.query(
         'SELECT data, sonno, acqua, umore, punteggio FROM dati_benessere WHERE user_id = ? ORDER BY data DESC LIMIT ?',
@@ -95,16 +89,13 @@ async function getLastNDays(userId, n) {
     return rows;
 }
 
-// Aggiorna streak e punteggio medio di un utente
 async function updateUserStats(userId) {
-    // Calcola media punteggi
     const [avgResult] = await promisePool.query(
         'SELECT AVG(punteggio) as media FROM dati_benessere WHERE user_id = ?',
         [userId]
     );
     const mediaPunteggi = Math.round(avgResult[0].media || 0);
     
-    // Calcola streak (giorni consecutivi con punteggio >= 60)
     const [dati] = await promisePool.query(
         'SELECT data, punteggio FROM dati_benessere WHERE user_id = ? ORDER BY data DESC',
         [userId]
@@ -132,31 +123,27 @@ async function updateUserStats(userId) {
         }
     }
     
-    // Aggiorna utente
     await promisePool.query(
         'UPDATE utenti SET punti_totali = ?, streak = ? WHERE id = ?',
         [mediaPunteggi, streak, userId]
     );
 }
 
-// Aggiungi punti da sfida
 async function addChallengePoints(userId, sfidaNome, punti) {
-    const oggi = new Date().toISOString().split('T')[0];
+    const oggi = new Date().toISOString();
     
     await promisePool.query(
         'INSERT INTO sfide (user_id, sfida_nome, data_completamento, punti) VALUES (?, ?, ?, ?)',
         [userId, sfidaNome, oggi, punti]
     );
     
-    // Aggiorna punti totali
     const [user] = await promisePool.query('SELECT punti_totali FROM utenti WHERE id = ?', [userId]);
-    const nuovoTotale = (user[0].punti_totali || 0) + punti;
+    const nuovoTotale = user[0].punti_totali + punti;
     await promisePool.query('UPDATE utenti SET punti_totali = ? WHERE id = ?', [nuovoTotale, userId]);
     
     return nuovoTotale;
 }
 
-// Ottieni sfide completate da un utente
 async function getUserChallenges(userId) {
     const [rows] = await promisePool.query(
         'SELECT sfida_nome, data_completamento, punti FROM sfide WHERE user_id = ? ORDER BY data_completamento DESC',
@@ -165,7 +152,6 @@ async function getUserChallenges(userId) {
     return rows;
 }
 
-// Ottieni classifica (top 10)
 async function getRanking() {
     const [rows] = await promisePool.query(
         'SELECT username, punti_totali, streak FROM utenti ORDER BY punti_totali DESC LIMIT 10'
@@ -173,7 +159,6 @@ async function getRanking() {
     return rows;
 }
 
-// Calcola punteggio giornaliero (logica di business)
 function calculateScore(sonno, acqua, umore) {
     let punteggioSonno = 0;
     if (sonno >= 7 && sonno <= 9) punteggioSonno = 40;

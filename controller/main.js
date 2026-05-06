@@ -29,7 +29,6 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// ============ ROTTE VIEWS ============
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'index.html'));});
 app.get('/login', (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'login.html'));});
 app.get('/dashboard', authenticateToken, (req, res) => { res.sendFile(path.join(__dirname, '..', 'views', 'dashboard.html'));});
@@ -84,7 +83,7 @@ app.post('/api/login', async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: false,
-            secure: false, // true in HTTPS
+            secure: false,
             sameSite: "lax",
             maxAge: 3600000
         });
@@ -109,7 +108,7 @@ app.post('/api/salva-dati', authenticateToken, async (req, res) => {
     try {
         await db.saveDailyData(userId, oggi, sonno, acqua, umore, punteggio);
         
-        // Ottieni streak aggiornato
+       
         const user = await db.findUserById(userId);
         
         res.json({ success: true, punteggio, streak: user?.streak || 0, puntiTotali: user?.punti_totali || 0 });
@@ -119,7 +118,6 @@ app.post('/api/salva-dati', authenticateToken, async (req, res) => {
     }
 });
 
-// ============ API DATI UTENTE ============
 app.get('/api/user/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
     
@@ -138,7 +136,6 @@ app.get('/api/user/:userId', authenticateToken, async (req, res) => {
     }
 });
 
-// ============ API CLASSIFICA ============
 app.get('/api/classifica', authenticateToken, async (req, res) => {
     try {
         const classifica = await db.getRanking();
@@ -149,7 +146,6 @@ app.get('/api/classifica', authenticateToken, async (req, res) => {
     }
 });
 
-// ============ API SFIDA COMPLETATA ============
 app.post('/api/sfida-completa', authenticateToken, async (req, res) => {
     const { userId, sfidaNome, punti } = req.body;
     
@@ -162,7 +158,6 @@ app.post('/api/sfida-completa', authenticateToken, async (req, res) => {
     }
 });
 
-// ============ API SFIDE UTENTE ============
 app.get('/api/sfide/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
     
@@ -175,7 +170,6 @@ app.get('/api/sfide/:userId', authenticateToken, async (req, res) => {
     }
 });
 
-// ============ WEB SERVICE PER ALTRI PROGETTI ============
 app.get('/ws/classifica', async (req, res) => {
     try {
         const classifica = await db.getRanking();
@@ -204,7 +198,6 @@ app.get('/ws/motivazione', (req, res) => {
     });
 });
 
-// Avvia server
 app.listen(PORT, () => {
     console.log(`server in ascolto su http://localhost:${PORT}`);
 });

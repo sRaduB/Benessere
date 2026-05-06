@@ -28,8 +28,6 @@
     <div id="classificaList" class="fade-up fade-up-1">
       <p style="color:var(--text-muted);text-align:center;padding:32px">Caricamento…</p>
     </div>
-
-    <a href="/dashboard" class="back-link">← Dashboard</a>
   </div>
 
   <script>
@@ -43,7 +41,7 @@
         return;
       }
       data.forEach((u, i) => {
-        const medals = ['🥇', '🥈', '🥉']; // da rimpiazzare
+        const medals = ['🥇', '🥈', '🥉'];
         const rankClass = i < 3 ? `rank-${i + 1}` : '';
         const medal = medals[i] || `${i + 1}`;
         wrap.innerHTML += `

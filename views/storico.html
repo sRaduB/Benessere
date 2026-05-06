@@ -38,8 +38,6 @@
         </table>
       </div>
     </div>
-
-    <a href="/dashboard" class="back-link">← Dashboard</a>
   </div>
 
   <script>
@@ -58,7 +56,7 @@
       for (let d of data.dati) {
         let umoreTxt = ['😢', '😟', '😐', '🙂', '😁'][d.umore - 1] || '😐';
         tbody.innerHTML += `<tr>
-          <td>${d.data}</td>
+          <td>${d.data.slice(0,10)}</td>
           <td>${d.sonno}h</td>
           <td>${d.acqua}L</td>
           <td style="font-size:1.2rem">${umoreTxt}</td>

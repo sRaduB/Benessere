@@ -71,8 +71,6 @@
       <button class="btn btn-primary btn-full btn-lg" onclick="salva()">Salva giornata</button>
       <div id="msg"></div>
     </div>
-
-    <a href="/dashboard" class="back-link">← Dashboard</a>
   </div>
 
   <script>
@@ -88,7 +86,7 @@
       const sonno  = parseFloat(sonnoEl.value);
       const acqua  = parseFloat(acquaEl.value);
       const umore  = parseInt(document.querySelector('input[name="umore"]:checked').value);
-      const oggi   = new Date().toISOString().split('T')[0];
+      const oggi   = new Date().toISOString()
 
       const res = await fetch('/api/salva-dati', {
         method: 'POST',
